@@ -182,7 +182,7 @@ module injoy_labs::inbond_treasury {
         let proof = borrow_global<InvestmentProof>(investor_addr);
         let num_votes = simple_map::borrow(&proof.voting_powers, &founder);
 
-        voting::vote(
+        voting::vote<WithdrawalProposal>(
             &empty_proposal(),
             copy founder,
             proposal_id,
