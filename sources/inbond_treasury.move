@@ -7,6 +7,8 @@ module injoy_labs::inbond_treasury {
     use aptos_std::table::{Self, Table};
     use std::error;
 
+    const PROPOSAL_STATE_SUCCEEDED: u64 = 1;
+
     /// -----------------
     /// Errors
     /// -----------------
@@ -138,8 +140,8 @@ module injoy_labs::inbond_treasury {
                 voting_powers: simple_map::create(),
             });
         };
-        let voting_powers = borrow_global_mut<InvestmentProof>(investor_addr).voting_powers;
-        simple_map::add(&mut voting_powers, founder, amount);
+        let voting_powers = &mut borrow_global_mut<InvestmentProof>(investor_addr).voting_powers;
+        simple_map::add(voting_powers, founder, amount);
     }
 
     public entry fun propose(
@@ -174,11 +176,13 @@ module injoy_labs::inbond_treasury {
             investor_addr,
             proposal_id,
         };
-        let records = borrow_global<VotingRecords>(founder);
+        let records = borrow_global_mut<VotingRecords>(founder);
         assert!(
             !table::contains(&records.votes, record_key),
             error::invalid_argument(E_ALREADY_VOTED),
         );
+        table::add(&mut records.votes, record_key, true);
+
         let proof = borrow_global<InvestmentProof>(investor_addr);
         let num_votes = simple_map::borrow(&proof.voting_powers, &founder);
 
@@ -267,4 +271,108 @@ module injoy_labs::inbond_treasury {
     fun convertable_amount(input: u64): u64 {
         input
     }
+
+    #[test_only]
+    fun setup_account(account: &signer): address {
+        use aptos_framework::account;
+        
+        let addr = signer::address_of(account);
+        account::create_account_for_test(addr);
+        addr
+    }
+
+    #[test_only]
+    public fun setup_voting(
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, InvestmentProof, VotingRecords
+    {
+        use aptos_framework::coin::{Self, FakeMoney};
+        use aptos_framework::timestamp;
+        use std::vector;
+
+        timestamp::set_time_has_started_for_testing(founder);
+
+        let founder_addr = setup_account(founder);
+        let yes_voter_addr = setup_account(yes_voter);
+        let no_voter_addr = setup_account(no_voter);
+
+        coin::create_fake_money(founder, yes_voter, 100);
+        coin::register<FakeMoney>(no_voter);
+        coin::transfer<FakeMoney>(founder, yes_voter_addr, 20);
+        coin::transfer<FakeMoney>(founder, no_voter_addr, 10);
+
+        // create treasury
+        create_treasury<FakeMoney, FakeMoney>(founder, 30, 10, 10000, 30);
+
+        // fund
+        fund<FakeMoney>(yes_voter, founder_addr, 20);
+        fund<FakeMoney>(no_voter, founder_addr, 10);
+
+        // create proposal
+        let execution_hash = vector::empty<u8>();
+        vector::push_back(&mut execution_hash, 1);
+        propose(founder, 20, founder_addr, execution_hash);
+    }
+
+    #[test(founder = @0x1, yes_voter = @0x234, no_voter = @0x345)]
+    public entry fun test_voting(
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, InvestmentProof, VotingRecords {
+        use aptos_framework::coin::{Self, FakeMoney};
+        use aptos_framework::timestamp;
+
+        let founder_addr = signer::address_of(founder);
+
+        setup_voting(founder, yes_voter, no_voter);
+
+        // vote
+        vote(yes_voter, founder_addr, 0, true);
+        vote(no_voter, founder_addr, 0, false);
+
+        timestamp::update_global_time_for_test(100001000000);
+        let proposal_state = voting::get_proposal_state<WithdrawalProposal>(founder_addr, 0);
+        assert!(proposal_state == PROPOSAL_STATE_SUCCEEDED, proposal_state);
+
+        // resolve
+        let withdrawal_proposal = voting::resolve<WithdrawalProposal>(founder_addr, 0);
+        withdraw<FakeMoney>(founder_addr, withdrawal_proposal);
+
+        assert!(voting::is_resolved<WithdrawalProposal>(founder_addr, 0), 2);
+        assert!(coin::balance<FakeMoney>(founder_addr) == 60, 4);
+    }
+
+    #[test(founder = @0x1, yes_voter = @0x234, no_voter = @0x345)]
+    public entry fun test_redeem_all(
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, InvestmentProof, VotingRecords {
+        use aptos_framework::coin::{Self, FakeMoney};
+
+        setup_voting(founder, yes_voter, no_voter);
+
+        // redeem all
+        redeem_all<FakeMoney>(no_voter, signer::address_of(founder));
+
+        assert!(coin::balance<FakeMoney>(signer::address_of(no_voter)) == 9, 1);
+    }
+
+    #[test(founder = @0x1, yes_voter = @0x234, no_voter = @0x345)]
+    #[expected_failure(abort_code = 0x10003, location = injoy_labs::inbond_treasury)]
+    public entry fun test_cannot_double_vote(
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, InvestmentProof, VotingRecords {
+        setup_voting(founder, yes_voter, no_voter);
+
+        // Double voting should throw an error.
+        vote(yes_voter, signer::address_of(founder), 0, true);
+        vote(yes_voter, signer::address_of(founder), 0, true);
+    }
+    
 }
