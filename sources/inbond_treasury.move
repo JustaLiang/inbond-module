@@ -39,12 +39,13 @@ module injoy_labs::inbond_treasury {
         description: String,
         image_url: String,
         external_url: String,
-        target_funding_supply: u64,
+        target_funding_size: u64,
         funding: Coin<FundingType>,
     }
 
     struct FounderVault<phantom FounderType> has key {
         vault: Coin<FounderType>,
+        issued_size: u64,
     }
 
     struct InvestmentProof has key {
@@ -81,7 +82,7 @@ module injoy_labs::inbond_treasury {
             has_treasury<CoinType>(founder),
             error::not_found(E_TREASURY_NOT_FOUND),
         );
-        borrow_global<Treasury<CoinType>>(founder).target_funding_supply        
+        borrow_global<Treasury<CoinType>>(founder).target_funding_size        
     }
     spec treasury_supply {
         aborts_if !exists<Treasury<CoinType>>(founder);
@@ -97,10 +98,10 @@ module injoy_labs::inbond_treasury {
         description: String,
         image_url: String,
         external_url: String,
-        target_funding_supply: u64,
+        target_funding_size: u64,
         min_voting_threshold: u128,
         voting_duration_secs: u64,
-        vault_size: u64,
+        issued_size: u64,
     ) {
         voting::register<WithdrawalProposal>(founder);
         move_to(founder, Treasury<FundingType> {
@@ -108,7 +109,7 @@ module injoy_labs::inbond_treasury {
             description,
             image_url,
             external_url,
-            target_funding_supply,
+            target_funding_size,
             funding: coin::zero<FundingType>(),
         });
         move_to(founder, VotingRecords {
@@ -116,13 +117,14 @@ module injoy_labs::inbond_treasury {
             voting_duration_secs,
             votes: table::new(),
         });
-        let coin = coin::withdraw<FounderType>(founder, vault_size);
+        let coin = coin::withdraw<FounderType>(founder, issued_size);
         let founder_addr = std::signer::address_of(founder);
         if (!coin::is_account_registered<FundingType>(founder_addr)) {
             coin::register<FundingType>(founder);
         };
         move_to(founder, FounderVault {
             vault: coin,
+            issued_size
         });
     }
     spec create_treasury {
@@ -142,7 +144,7 @@ module injoy_labs::inbond_treasury {
     ) acquires Treasury, InvestmentProof {
         check_treasury<CoinType>(founder);
         let treasury = borrow_global_mut<Treasury<CoinType>>(founder);
-        let gap = treasury.target_funding_supply - coin::value(&treasury.funding);
+        let gap = treasury.target_funding_size - coin::value(&treasury.funding);
         let amount = if (gap >= amount) {
             amount
         } else {
@@ -225,34 +227,33 @@ module injoy_labs::inbond_treasury {
     public entry fun redeem_all<CoinType>(
         investor: &signer,
         founder: address,
-    ) acquires Treasury, InvestmentProof, VotingRecords {
+    ) acquires Treasury, InvestmentProof {
         let investor_addr = std::signer::address_of(investor);
         let treasury = borrow_global_mut<Treasury<CoinType>>(founder);
         let voting_power = borrow_global_mut<InvestmentProof>(investor_addr);
         let (_, num_votes) = simple_map::remove(&mut voting_power.voting_powers, &founder);
         let coin = coin::extract(&mut treasury.funding, num_votes * 9 / 10);
         coin::deposit(investor_addr, coin);
-
-        let records = borrow_global_mut<VotingRecords>(founder);
-        records.min_voting_threshold = records.min_voting_threshold - (num_votes as u128);
     }
 
     public entry fun convert_all<FundingType, FounderType>(
         investor: &signer,
         founder: address,
-    ) acquires Treasury, InvestmentProof, VotingRecords, FounderVault {
+    ) acquires Treasury, InvestmentProof, FounderVault {
         let investor_addr = std::signer::address_of(investor);
         let treasury = borrow_global_mut<Treasury<FundingType>>(founder);
         let proof = borrow_global_mut<InvestmentProof>(investor_addr);
-        let records = borrow_global_mut<VotingRecords>(founder);
         let vault = borrow_global_mut<FounderVault<FounderType>>(founder);
+
+        if (!coin::is_account_registered<FounderType>(investor_addr)) {
+            coin::register<FounderType>(investor);
+        };
 
         let (_, num_votes) = simple_map::remove(&mut proof.voting_powers, &founder);
 
         let input_coin = coin::extract(&mut treasury.funding, num_votes);
-        records.min_voting_threshold = records.min_voting_threshold - (num_votes as u128);
 
-        let output_amount = convertable_amount(coin::value(&input_coin));
+        let output_amount = coin::value(&input_coin) * vault.issued_size / treasury.target_funding_size;
 
         let output_coin = coin::extract(&mut vault.vault, output_amount);
 
@@ -283,10 +284,6 @@ module injoy_labs::inbond_treasury {
             withdrawal_amount: 0,
             beneficiary: @0x0,
         }
-    }
-
-    fun convertable_amount(input: u64): u64 {
-        input
     }
 
     #[test_only]
@@ -337,7 +334,7 @@ module injoy_labs::inbond_treasury {
             false,
         );
         managed_coin::register<FounderCoin>(founder);
-        managed_coin::mint<FounderCoin>(founder, founder_addr, 30);
+        managed_coin::mint<FounderCoin>(founder, founder_addr, 90);
 
         // create treasury
         create_treasury<FakeMoney, FounderCoin>(
@@ -349,7 +346,7 @@ module injoy_labs::inbond_treasury {
             30,
             10,
             10000,
-            30
+            90,
         );
 
         // fund
@@ -420,5 +417,21 @@ module injoy_labs::inbond_treasury {
         // Double voting should throw an error.
         vote(yes_voter, signer::address_of(founder), 0, true);
         vote(yes_voter, signer::address_of(founder), 0, true);
-    }   
+    }
+
+    #[test(aptos = @0x1, founder = @injoy_labs, yes_voter = @0x234, no_voter = @0x345)]
+    public entry fun test_convert_all(
+        aptos: &signer,
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, InvestmentProof, VotingRecords, FounderVault {
+        setup_voting(aptos, founder, yes_voter, no_voter);
+        let founder_addr = std::signer::address_of(founder);
+
+        convert_all<FakeMoney, FounderCoin>(yes_voter, founder_addr);
+
+        let investor_addr = std::signer::address_of(yes_voter);
+        assert!(coin::balance<FounderCoin>(investor_addr) == 60, 0);
+    }
 }
