@@ -1,5 +1,5 @@
 [package]
-name = 'inbond'
+name = 'aptos-inbond'
 version = '1.0.0'
 
 [dependencies.AptosFramework]
@@ -8,4 +8,4 @@ rev = 'main'
 subdir = 'aptos-move/framework/aptos-framework'
 
 [addresses]
-injoy_labs = "0x1e2e6f96eaededbe163c3f4a7c3546c3e2d7ebca958f3277a5076ec23d08e5ce"
+injoy_labs = "6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9"
