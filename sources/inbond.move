@@ -9,6 +9,7 @@ module injoy_labs::inbond {
     use std::error;
     use std::type_info;
 
+    /// ProposalStateEnum representing proposal state.
     const PROPOSAL_STATE_SUCCEEDED: u64 = 1;
 
     /// -----------------
@@ -29,12 +30,14 @@ module injoy_labs::inbond {
         proposal_id: u64,
     }
 
+    /// Records to track the proposals each treasury has been used to vote on.
     struct VotingRecords has key {
         min_voting_threshold: u128,
         voting_duration_secs: u64,
         votes: Table<RecordKey, bool>,
     }
 
+    /// Treasury resource.
     struct Treasury<phantom FundingType> has key {        
         name: String,
         creator: String,
@@ -72,6 +75,7 @@ module injoy_labs::inbond {
     /// Public functions
     /// -----------------
 
+    /// Create a new treasury.
     public entry fun create_treasury<FundingType, FounderType>(
         founder: &signer,
         name: String,
@@ -123,6 +127,7 @@ module injoy_labs::inbond {
         ensures exists<VotingRecords>(founder_addr);
     }
 
+    /// Invest in a treasury.
     public entry fun invest<CoinType>(
         investor: &signer,
         founder: address,
@@ -154,6 +159,8 @@ module injoy_labs::inbond {
         }
     }
 
+    /// Create a withdrawal proposal.
+    /// @param execution_hash Required. This is the hash of the resolution script.
     public entry fun propose(
         founder: &signer,
         withdrawal_amount: u64,
@@ -175,6 +182,7 @@ module injoy_labs::inbond {
         );
     }
 
+    /// Vote for a withdrawal proposal, and the voting power is determined by the amount invested.
     public entry fun vote(
         investor: &signer,
         founder: address,
@@ -205,6 +213,7 @@ module injoy_labs::inbond {
         );
     }
 
+    /// Withdraw the funding.
     public fun withdraw<CoinType>(
         founder: address,
         proposal: WithdrawalProposal,
@@ -215,6 +224,7 @@ module injoy_labs::inbond {
         coin::deposit(proposal.beneficiary, coin);
     }
 
+    /// Redeem the funding.
     public entry fun redeem_all<CoinType>(
         investor: &signer,
         founder: address,
@@ -227,6 +237,7 @@ module injoy_labs::inbond {
         coin::deposit(investor_addr, coin);
     }
 
+    /// Convert the funding to the coin.
     public entry fun convert_all<FundingType, FounderType>(
         investor: &signer,
         founder: address,
