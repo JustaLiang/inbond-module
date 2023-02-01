@@ -22,6 +22,7 @@
   - [Function `withdraw`](#function-withdraw)
   - [Function `redeem_all`](#function-redeem_all)
   - [Function `convert_all`](#function-convert_all)
+  - [Function `update_treasury_info`](#function-update_treasury_info)
   - [Function `check_treasury`](#function-check_treasury)
   - [Function `check_records`](#function-check_records)
   - [Function `empty_proposal`](#function-empty_proposal)
@@ -43,6 +44,7 @@
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_RecordKey"></a>
 
 ## Struct `RecordKey`
+
 
 <pre><code><b>struct</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_RecordKey">RecordKey</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
@@ -332,6 +334,16 @@ Records not found error.
 
 
 <pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_RECORDS_NOT_FOUND">E_RECORDS_NOT_FOUND</a>: u64 = 1;
+</code></pre>
+
+
+
+<a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_INFO_NOT_MATCH"></a>
+
+Treasury info not match error.
+
+
+<pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_INFO_NOT_MATCH">E_TREASURY_INFO_NOT_MATCH</a>: u64 = 4;
 </code></pre>
 
 
@@ -709,6 +721,43 @@ Convert the funding to the coin.
 
     <a href="_deposit">coin::deposit</a>(founder, input_coin);
     <a href="_deposit">coin::deposit</a>(investor_addr, output_coin);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_update_treasury_info"></a>
+
+## Function `update_treasury_info`
+
+Update the treasury info.
+
+
+<pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_update_treasury_info">update_treasury_info</a>&lt;CoinType&gt;(founder: &<a href="">signer</a>, name: <a href="_String">string::String</a>, description: <a href="_String">string::String</a>, image_url: <a href="_String">string::String</a>, external_url: <a href="_String">string::String</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_update_treasury_info">update_treasury_info</a>&lt;CoinType&gt;(
+    founder: &<a href="">signer</a>,
+    name: String,
+    description: String,
+    image_url: String,
+    external_url: String
+) <b>acquires</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_Treasury">Treasury</a> {
+    <b>let</b> founder_addr = std::signer::address_of(founder);
+    <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_check_treasury">check_treasury</a>&lt;CoinType&gt;(founder_addr);
+    <b>let</b> treasury = <b>borrow_global_mut</b>&lt;<a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_Treasury">Treasury</a>&lt;CoinType&gt;&gt;(founder_addr);
+    treasury.name = name;
+    treasury.description = description;
+    treasury.image_url = image_url;
+    treasury.external_url = external_url;
 }
 </code></pre>
 

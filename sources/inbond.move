@@ -24,6 +24,8 @@ module injoy_labs::inbond {
     const E_TREASURY_NO_GAP: u64 = 2;
     /// Already voted error.
     const E_ALREADY_VOTED: u64 = 3;
+    /// Treasury info not match error. 
+    const E_TREASURY_INFO_NOT_MATCH: u64 = 4;
 
     /// -----------------
     /// Resources
@@ -284,6 +286,23 @@ module injoy_labs::inbond {
         coin::deposit(investor_addr, output_coin);
     }
 
+    /// Update the treasury info.
+    public entry fun update_treasury_info<CoinType>(
+        founder: &signer,
+        name: String,
+        description: String,
+        image_url: String,
+        external_url: String
+    ) acquires Treasury {
+        let founder_addr = std::signer::address_of(founder);
+        check_treasury<CoinType>(founder_addr);
+        let treasury = borrow_global_mut<Treasury<CoinType>>(founder_addr);
+        treasury.name = name;
+        treasury.description = description;
+        treasury.image_url = image_url;
+        treasury.external_url = external_url;
+    }
+
     /// -----------------
     /// Private functions
     /// -----------------
@@ -459,5 +478,43 @@ module injoy_labs::inbond {
 
         let investor_addr = std::signer::address_of(yes_voter);
         assert!(coin::balance<FounderCoin>(investor_addr) == 60, 0);
+    }
+
+    #[test(aptos = @0x1, founder = @injoy_labs, yes_voter = @0x234, no_voter = @0x345)]
+    public entry fun test_update_treasury_info(
+        aptos: &signer,
+        founder: &signer,
+        yes_voter: &signer,
+        no_voter: &signer,
+    ) acquires Treasury, Bonds, VotingRecords, FounderInfos {
+        use std::string;
+        setup_voting(aptos, founder, yes_voter, no_voter);
+
+        update_treasury_info<FakeMoney>(
+            founder,
+            string::utf8(b"InJoyLabsTest-update"),
+            string::utf8(b"Use this module built by InJoy Labs to test fund-raising."),
+            string::utf8(b"ipfs://image-url-update"),
+            string::utf8(b"ipfs://external-url-update"),
+        );
+
+        let treasury = borrow_global<Treasury<FakeMoney>>(std::signer::address_of(founder));
+        
+        assert!(
+            treasury.name == string::utf8(b"InJoyLabsTest-update"),
+            error::not_found(E_TREASURY_INFO_NOT_MATCH),
+        );
+        assert!(
+            treasury.description == string::utf8(b"Use this module built by InJoy Labs to test fund-raising."),
+            error::not_found(E_TREASURY_INFO_NOT_MATCH),
+        );
+        assert!(
+            treasury.image_url == string::utf8(b"ipfs://image-url-update"),
+            error::not_found(E_TREASURY_INFO_NOT_MATCH),
+        );
+        assert!(
+            treasury.external_url == string::utf8(b"ipfs://external-url-update"),
+            error::not_found(E_TREASURY_INFO_NOT_MATCH),
+        );
     }
 }
