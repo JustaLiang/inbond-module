@@ -5,25 +5,26 @@
 
 
 
--  [Struct `RecordKey`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_RecordKey)
--  [Resource `VotingRecords`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_VotingRecords)
--  [Resource `Treasury`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_Treasury)
--  [Resource `FounderVault`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_FounderVault)
--  [Resource `Bonds`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_Bonds)
--  [Struct `WithdrawalProposal`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_WithdrawalProposal)
--  [Resource `FounderInfos`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_FounderInfos)
--  [Constants](#@Constants_0)
--  [Function `init_module`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_init_module)
--  [Function `create_treasury`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_create_treasury)
--  [Function `invest`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_invest)
--  [Function `propose`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_propose)
--  [Function `vote`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_vote)
--  [Function `withdraw`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_withdraw)
--  [Function `redeem_all`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_redeem_all)
--  [Function `convert_all`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_convert_all)
--  [Function `check_treasury`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_check_treasury)
--  [Function `check_records`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_check_records)
--  [Function `empty_proposal`](#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_empty_proposal)
+- [Module `0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9::inbond`](#module-0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9inbond)
+  - [Struct `RecordKey`](#struct-recordkey)
+  - [Resource `VotingRecords`](#resource-votingrecords)
+  - [Resource `Treasury`](#resource-treasury)
+  - [Resource `FounderVault`](#resource-foundervault)
+  - [Resource `Bonds`](#resource-bonds)
+  - [Struct `WithdrawalProposal`](#struct-withdrawalproposal)
+  - [Resource `FounderInfos`](#resource-founderinfos)
+  - [Constants](#constants)
+  - [Function `init_module`](#function-init_module)
+  - [Function `create_treasury`](#function-create_treasury)
+  - [Function `invest`](#function-invest)
+  - [Function `propose`](#function-propose)
+  - [Function `vote`](#function-vote)
+  - [Function `withdraw`](#function-withdraw)
+  - [Function `redeem_all`](#function-redeem_all)
+  - [Function `convert_all`](#function-convert_all)
+  - [Function `check_treasury`](#function-check_treasury)
+  - [Function `check_records`](#function-check_records)
+  - [Function `empty_proposal`](#function-empty_proposal)
 
 
 <pre><code><b>use</b> <a href="">0x1::coin</a>;
@@ -42,11 +43,6 @@
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_RecordKey"></a>
 
 ## Struct `RecordKey`
-
------------------
-Resources
------------------
-
 
 <pre><code><b>struct</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_RecordKey">RecordKey</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
@@ -322,6 +318,7 @@ ProposalStateEnum representing proposal state.
 
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_ALREADY_VOTED"></a>
 
+Already voted error.
 
 
 <pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_ALREADY_VOTED">E_ALREADY_VOTED</a>: u64 = 3;
@@ -331,6 +328,7 @@ ProposalStateEnum representing proposal state.
 
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_RECORDS_NOT_FOUND"></a>
 
+Records not found error.
 
 
 <pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_RECORDS_NOT_FOUND">E_RECORDS_NOT_FOUND</a>: u64 = 1;
@@ -340,9 +338,7 @@ ProposalStateEnum representing proposal state.
 
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_NOT_FOUND"></a>
 
------------------
-Errors
------------------
+Treasury not found error.
 
 
 <pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_NOT_FOUND">E_TREASURY_NOT_FOUND</a>: u64 = 0;
@@ -352,6 +348,7 @@ Errors
 
 <a name="0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_NO_GAP"></a>
 
+The treasury has reached the target funding amount.
 
 
 <pre><code><b>const</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_E_TREASURY_NO_GAP">E_TREASURY_NO_GAP</a>: u64 = 2;
@@ -387,10 +384,16 @@ Errors
 
 ## Function `create_treasury`
 
------------------
-Public functions
------------------
 Create a new treasury.
+@param name The name of the treasury.
+@param creator The creator of the treasury.
+@param description The description of the treasury.
+@param image_url The image url of the treasury.
+@param external_url The external url of the treasury.
+@param target_funding_size The target funding size of the treasury.
+@param min_voting_threshold The minimum voting threshold of the treasury.
+@param voting_duration_secs The voting duration of the treasury.
+@param vault_size The vault size of the treasury.
 
 
 <pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_create_treasury">create_treasury</a>&lt;FundingType, FounderType&gt;(founder: &<a href="">signer</a>, name: <a href="_String">string::String</a>, creator: <a href="_String">string::String</a>, description: <a href="_String">string::String</a>, image_url: <a href="_String">string::String</a>, external_url: <a href="_String">string::String</a>, target_funding_size: u64, min_voting_threshold: u128, voting_duration_secs: u64, vault_size: u64)
@@ -454,6 +457,8 @@ Create a new treasury.
 ## Function `invest`
 
 Invest in a treasury.
+@param founder The treasury founder address.
+@param amount The amount to invest.
 
 
 <pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_invest">invest</a>&lt;CoinType&gt;(investor: &<a href="">signer</a>, founder: <b>address</b>, amount: u64)
@@ -506,7 +511,10 @@ Invest in a treasury.
 ## Function `propose`
 
 Create a withdrawal proposal.
-@param execution_hash Required. This is the hash of the resolution script.
+@param founder The treasury founder address.
+@param withdrawal_amount The amount to withdraw.
+@param beneficiary The beneficiary address.
+@param execution_hash This is the hash of the resolution script.
 
 
 <pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_propose">propose</a>(founder: &<a href="">signer</a>, withdrawal_amount: u64, beneficiary: <b>address</b>, execution_hash: <a href="">vector</a>&lt;u8&gt;)
@@ -549,6 +557,9 @@ Create a withdrawal proposal.
 ## Function `vote`
 
 Vote for a withdrawal proposal, and the voting power is determined by the amount invested.
+@param founder The treasury founder address.
+@param proposal_id The id of the proposal.
+@param should_pass The vote result. True means pass. False means reject.
 
 
 <pre><code><b>public</b> entry <b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_vote">vote</a>(investor: &<a href="">signer</a>, founder: <b>address</b>, proposal_id: u64, should_pass: bool)
@@ -599,7 +610,7 @@ Vote for a withdrawal proposal, and the voting power is determined by the amount
 
 ## Function `withdraw`
 
-Withdraw the funding.
+Withdraw the funding. This can be called by the founder.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="withdraw.md#0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_withdraw">withdraw</a>&lt;CoinType&gt;(founder: <b>address</b>, proposal: <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_WithdrawalProposal">inbond::WithdrawalProposal</a>)
@@ -709,9 +720,6 @@ Convert the funding to the coin.
 
 ## Function `check_treasury`
 
------------------
-Private functions
------------------
 
 
 <pre><code><b>fun</b> <a href="inbond.md#0x6064192b201dc3a7cff0513654610b141e754c9eb1ff22d40622f858c9d912e9_inbond_check_treasury">check_treasury</a>&lt;CoinType&gt;(addr: <b>address</b>)

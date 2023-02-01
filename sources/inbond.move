@@ -16,9 +16,13 @@ module injoy_labs::inbond {
     /// Errors
     /// -----------------
 
+    /// Treasury not found error.
     const E_TREASURY_NOT_FOUND: u64 = 0;
+    /// Records not found error.
     const E_RECORDS_NOT_FOUND: u64 = 1;
+    /// The treasury has reached the target funding amount.
     const E_TREASURY_NO_GAP: u64 = 2;
+    /// Already voted error.
     const E_ALREADY_VOTED: u64 = 3;
 
     /// -----------------
@@ -76,6 +80,15 @@ module injoy_labs::inbond {
     /// -----------------
 
     /// Create a new treasury.
+    /// @param name The name of the treasury.
+    /// @param creator The creator of the treasury.
+    /// @param description The description of the treasury.
+    /// @param image_url The image url of the treasury.
+    /// @param external_url The external url of the treasury.
+    /// @param target_funding_size The target funding size of the treasury.
+    /// @param min_voting_threshold The minimum voting threshold of the treasury.
+    /// @param voting_duration_secs The voting duration of the treasury.
+    /// @param vault_size The vault size of the treasury.
     public entry fun create_treasury<FundingType, FounderType>(
         founder: &signer,
         name: String,
@@ -128,6 +141,8 @@ module injoy_labs::inbond {
     }
 
     /// Invest in a treasury.
+    /// @param founder The treasury founder address.
+    /// @param amount The amount to invest.
     public entry fun invest<CoinType>(
         investor: &signer,
         founder: address,
@@ -160,7 +175,10 @@ module injoy_labs::inbond {
     }
 
     /// Create a withdrawal proposal.
-    /// @param execution_hash Required. This is the hash of the resolution script.
+    /// @param founder The treasury founder address.
+    /// @param withdrawal_amount The amount to withdraw.
+    /// @param beneficiary The beneficiary address.
+    /// @param execution_hash This is the hash of the resolution script.
     public entry fun propose(
         founder: &signer,
         withdrawal_amount: u64,
@@ -183,6 +201,9 @@ module injoy_labs::inbond {
     }
 
     /// Vote for a withdrawal proposal, and the voting power is determined by the amount invested.
+    /// @param founder The treasury founder address.
+    /// @param proposal_id The id of the proposal.
+    /// @param should_pass The vote result. True means pass. False means reject.
     public entry fun vote(
         investor: &signer,
         founder: address,
@@ -213,7 +234,7 @@ module injoy_labs::inbond {
         );
     }
 
-    /// Withdraw the funding.
+    /// Withdraw the funding. This can be called by the founder.
     public fun withdraw<CoinType>(
         founder: address,
         proposal: WithdrawalProposal,
