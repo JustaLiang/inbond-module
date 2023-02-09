@@ -324,8 +324,10 @@ module injoy_labs::inbond_v2 {
             vector[bcs::to_bytes(&voting_power), bcs::to_bytes(&remaining_amount)],
             vector[string::utf8(b"u64"), string::utf8(b"u64")],
         );
-        let coin = coin::extract(&mut project.funding, amount);
+        let coin = coin::extract(&mut project.funding, amount * 9 / 10);
         coin::deposit(investor_addr, coin);
+        let coin = coin::extract(&mut project.funding, amount / 10);
+        coin::deposit(project.founder_address, coin);
     }
 
     /// Convert the funding to the coin.
@@ -340,7 +342,7 @@ module injoy_labs::inbond_v2 {
         let vault = borrow_global_mut<FounderVault<FounderType>>(project_address);
 
         assert!(project.is_completed, error::invalid_state(EPROJECT_IS_NOT_COMPLETED));
-        
+
         if (!coin::is_account_registered<FounderType>(investor_addr)) {
             coin::register<FounderType>(investor);
         };
