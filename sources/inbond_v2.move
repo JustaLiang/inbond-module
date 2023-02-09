@@ -41,6 +41,9 @@ module injoy_labs::inbond_v2 {
     const EALREADY_VOTED: u64 = 5;
     /// Not enough remaining amount to redeem or convert
     const ENOT_ENOUGH_REMAINING_AMOUNT: u64 = 6;
+    /// Not founder update project info
+    const ENOT_FOUNDER_UPDATE_PROJECT_INFO: u64 = 7;
+
 
     /// Detailed info of a certain project
     struct Project<phantom FundingType> has key {
@@ -378,6 +381,27 @@ module injoy_labs::inbond_v2 {
             vector[bcs::to_bytes(&voting_power), bcs::to_bytes(&remaining_amount)],
             vector[string::utf8(b"u64"), string::utf8(b"u64")],
         );
+    }
+
+    public entry fun update_project_info<FundingType>(
+        founder: &signer,
+        project_address: address,
+        description: String,
+        image_url: String,
+        external_url: String,
+    ) acquires Project {
+        let founder_addr = signer::address_of(founder);
+        let project = borrow_global_mut<Project<FundingType>>(project_address);
+        assert!(
+            project.founder_address == founder_addr,
+            error::permission_denied(ENOT_FOUNDER_UPDATE_PROJECT_INFO),
+        );
+        project.description = description;
+        project.image_url = image_url;
+        project.external_url = external_url;
+        let project_signer = account::create_signer_with_capability(&project.signer_cap);
+        token::mutate_collection_description(&project_signer, project.name, description);
+        token::mutate_collection_uri(&project_signer, project.name, image_url);
     }
 
     fun check_project<FundingType>(project_address: address) {
