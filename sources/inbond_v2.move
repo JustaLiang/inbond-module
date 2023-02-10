@@ -3,7 +3,7 @@ module injoy_labs::inbond_v2 {
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::signer;
-    use aptos_framework::voting;
+    // use aptos_framework::voting;
     use aptos_std::option;
     use aptos_std::simple_map::{Self, SimpleMap};
     use aptos_std::table::{Self, Table};
@@ -15,6 +15,7 @@ module injoy_labs::inbond_v2 {
     use std::vector;
     use std::bcs;
     use injoy_labs::to_string;
+    use injoy_labs::op_voting;
 
     /// ProposalStateEnum representing proposal state.
     const PROPOSAL_STATE_SUCCEEDED: u64 = 1;
@@ -117,7 +118,7 @@ module injoy_labs::inbond_v2 {
         vector::append(&mut seed, *string::bytes(&name));
         let (resource_signer, resource_signer_cap) = account::create_resource_account(founder, seed);
 
-        voting::register<WithdrawalProposal>(&resource_signer);
+        op_voting::register<WithdrawalProposal>(&resource_signer);
 
         let founder_address = signer::address_of(founder);
         move_to(&resource_signer, Project<FundingType> {
@@ -231,7 +232,7 @@ module injoy_labs::inbond_v2 {
             error::permission_denied(ENOT_FOUNDER_PROPOSE),
         );
 
-        voting::create_proposal(
+        op_voting::create_proposal(
             founder_addr,
             project_address,
             WithdrawalProposal { withdrawal_amount, beneficiary },
@@ -280,7 +281,7 @@ module injoy_labs::inbond_v2 {
 
         let (voting_powner, _) = get_properties(investor_addr, token_id);
 
-        voting::vote<WithdrawalProposal>(
+        op_voting::vote<WithdrawalProposal>(
             &empty_proposal(),
             copy project_address,
             proposal_id,
